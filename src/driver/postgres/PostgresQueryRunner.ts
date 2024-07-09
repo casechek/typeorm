@@ -2954,6 +2954,10 @@ export class PostgresQueryRunner
         // new index may be passed without name. In this case we generate index name manually.
         if (!index.name) index.name = this.generateIndexName(table, index)
 
+        if (index.name.length > this.connection.driver.maxAliasLength!) {
+            throw new TypeORMError(`Index Name ${index.name} exceeds database max length of ${this.connection.driver.maxAliasLength!}!`)
+        }
+
         const up = this.createIndexSql(table, index)
         const down = this.dropIndexSql(table, index)
         await this.executeQueries(up, down)
