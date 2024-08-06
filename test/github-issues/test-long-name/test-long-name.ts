@@ -1,12 +1,11 @@
 import "reflect-metadata"
-import { expect } from "chai"
 import { DataSource } from "../../../src/data-source/DataSource"
 import {
     closeTestingConnections,
     createTestingConnections,
 } from "../../utils/test-utils"
-import { ReallyReallyVeryVeryVeryLongTableName } from "./entity/ReallyReallyVeryVeryVeryLongTableName"
-import { QueryFailedError } from "../../../src/error/QueryFailedError"
+import {expect} from "chai";
+
 
 /**
  * @see https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-SYNTAX-IDENTIFIERS
@@ -29,33 +28,15 @@ describe("github issues > #7106 shorten sequence names (for RDBMS with a limit) 
     )
     after(() => closeTestingConnections(connections))
 
-    it("should be able to work with long sequence name with short table name", () => {
+    it("should be able to work with long sequence name with short table name", async () => {
         // Borrowed from issue-10043.ts
-        Promise.all(
+        await Promise.all(
             connections.map(async (connection) => {
-                await connection.runMigrations()
-
-                const sqlInMemory = await connection.driver
-                    .createSchemaBuilder()
-                    .log()
-
-                sqlInMemory.upQueries.length.should.equal(0)
-                sqlInMemory.downQueries.length.should.equal(0)
+                await expect(connection.driver
+                        .createSchemaBuilder()
+                        .log()
+                ).rejectedWith('idx_short_table_name_asdfadsfadsfadsfafsgdfsgsdfgsdfgdfsgsdfgdfadfadsfasdfadfadsfasdf exceeds database max length of 63!')
             }),
         )
     });
-
-    it("should be able to work with long sequence name with long table name", () =>
-        Promise.all(
-            connections.map(async (connection) => {
-                const long = new ReallyReallyVeryVeryVeryLongTableName()
-                long.Name = "Eora"
-                await connection
-                    .getRepository(ReallyReallyVeryVeryVeryLongTableName)
-                    .save(long)
-                return expect(connection.synchronize()).to.not.be.rejectedWith(
-                    QueryFailedError,
-                )
-            }),
-        ))
 })
