@@ -601,7 +601,7 @@ export class PostgresQueryRunner
                 downQueries.push(this.dropIndexSql(table, index))
             })
         }
-        
+
         if (table.comment) {
             upQueries.push(new Query("COMMENT ON TABLE " + this.escapePath(table) + " IS '" + table.comment + "'"));
             downQueries.push(new Query("COMMENT ON TABLE " + this.escapePath(table) + " IS NULL"));
@@ -4300,6 +4300,11 @@ export class PostgresQueryRunner
         const columns = index.columnNames
             .map((columnName) => `"${columnName}"`)
             .join(", ")
+
+        if (index.name && index.name.length > this.connection.driver.maxAliasLength!) {
+            throw new TypeORMError(`Index Name ${index.name} exceeds database max length of ${this.connection.driver.maxAliasLength!}!`)
+        }
+
         return new Query(
             `CREATE ${index.isUnique ? "UNIQUE " : ""}INDEX${
                 index.isConcurrent ? " CONCURRENTLY" : ""
@@ -4748,7 +4753,7 @@ export class PostgresQueryRunner
 
         newComment = this.escapeComment(newComment)
         const comment = this.escapeComment(table.comment)
-        
+
         if (newComment === comment) {
             return
         }
