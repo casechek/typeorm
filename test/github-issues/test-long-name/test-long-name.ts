@@ -28,6 +28,7 @@ describe("github issues > #7106 shorten sequence names (for RDBMS with a limit) 
     )
     after(() => closeTestingConnections(connections))
 
+    // TODO: Find all other places this error should be thrown and add test cases to cover them
     it("should be able to work with long sequence name with short table name", async () => {
         // Borrowed from issue-10043.ts
         await Promise.all(
